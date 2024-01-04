@@ -1,0 +1,4 @@
+zenoh_params:
+  wasd_controller:
+    pub_topic: "cmd_vel"
+    power_rate: 1.0
