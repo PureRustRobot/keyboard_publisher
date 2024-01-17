@@ -4,18 +4,17 @@ use zenoh::{
     Error
 };
 
-use zenoh_interface::CmdVel;
-use zenoh_manage_utils::{logger, param};
+use prr_msgs::msg::*;
+use zenoh_manage_utils::logger;
 use async_std::{self, io::ReadExt};
 
-use serde_json;
-
-pub async fn wasd_controller(node_name:&str, yaml_path:&str)->Result<(), Error>
+pub async fn wasd_controller(
+    node_name:&str, 
+    pub_topic:&str,
+    pub_power_rate:f32
+)->Result<(), Error>
 {
     let session = zenoh::open(Config::default()).res().await.unwrap();
-
-    let pub_topic = param::get_str_param(yaml_path, node_name, "pub_topic", "cmd_vel".to_string());
-    let rate = param::get_f64_param(yaml_path, node_name, "power_rate", 1.0) as f32;
 
     let publisher = session.declare_publisher(pub_topic).res().await.unwrap();
 
@@ -32,58 +31,46 @@ pub async fn wasd_controller(node_name:&str, yaml_path:&str)->Result<(), Error>
             b'w'=>{
                 let cmd = CmdVel{
                     x:0.0,
-                    y:1.0*rate,
+                    y:1.0*pub_power_rate,
                     rotation_power:0.0
                 };
 
-                let serialized = serde_json::to_string(&cmd).unwrap();
+                logger::log_info(node_name, "Send message".to_string());
 
-                let msg = format!("send :{}", serialized);
-                logger::log_info(node_name, msg);
-
-                publisher.put(serialized).res().await.unwrap();
+                publisher.put(serialize_cmdvel(&cmd)).res().await.unwrap();
             },
             b'a'=>{
                 let cmd = CmdVel{
-                    x:-1.0*rate,
+                    x:1.0*pub_power_rate,
                     y:0.0,
                     rotation_power:0.0
                 };
 
-                let serialized = serde_json::to_string(&cmd).unwrap();
+                logger::log_info(node_name, "Send message".to_string());
 
-                let msg = format!("send :{}", serialized);
-                logger::log_info(node_name, msg);
-
-                publisher.put(serialized).res().await.unwrap();
+                publisher.put(serialize_cmdvel(&cmd)).res().await.unwrap();
             },
             b's'=>{
                 let cmd = CmdVel{
                     x:0.0,
-                    y:-1.0*rate,
+                    y:-1.0*pub_power_rate,
                     rotation_power:0.0
                 };
 
-                let serialized = serde_json::to_string(&cmd).unwrap();
+                logger::log_info(node_name, "Send message".to_string());
 
-                let msg = format!("send :{}", serialized);
-                logger::log_info(node_name, msg);
-
-                publisher.put(serialized).res().await.unwrap();
+                publisher.put(serialize_cmdvel(&cmd)).res().await.unwrap();
             }
             b'd'=>{
                 let cmd = CmdVel{
-                    x:1.0*rate,
+                    x:1.0*pub_power_rate,
                     y:0.0,
                     rotation_power:0.0
                 };
 
-                let serialized = serde_json::to_string(&cmd).unwrap();
+                logger::log_info(node_name, "Send message".to_string());
 
-                let msg = format!("send :{}", serialized);
-                logger::log_info(node_name, msg);
-
-                publisher.put(serialized).res().await.unwrap();
+                publisher.put(serialize_cmdvel(&cmd)).res().await.unwrap();
             }
             0 => (),
             _ => (),
